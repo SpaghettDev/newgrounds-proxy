@@ -1,5 +1,7 @@
 #include <Geode/Geode.hpp>
 
+#include <Geode/modify/CCHttpClient.hpp>
+
 using namespace geode::prelude;
 
 std::string str_replace(std::string haystack, std::string needle, std::string replacement)
@@ -20,27 +22,16 @@ std::string str_replace(std::string haystack, std::string needle, std::string re
 	return input;
 }
 
-
-void proxySend(CCHttpClient* self, CCHttpRequest* req)
+class $modify(extension::CCHttpClient)
 {
-	auto new_request_url = std::string(req->getUrl());
-	new_request_url = str_replace(new_request_url, "audio.ngfiles.com", "newgrounds.auby.pro");
-	new_request_url = str_replace(new_request_url, "http://", "https://");
+    void send(CCHttpRequest* request)
+    {
+        auto new_request_url = std::string(request->getUrl());
+        new_request_url = str_replace(new_request_url, "audio.ngfiles.com", "newgrounds.auby.pro");
+        new_request_url = str_replace(new_request_url, "http://", "https://");
 
-	req->setUrl(new_request_url.c_str());
+        request->setUrl(new_request_url.c_str());
 
-	self->send(req);
-}
-
-
-$execute
-{
-    Mod::get()->hook(
-        reinterpret_cast<void*>(
-			geode::addresser::getNonVirtual(&cocos2d::extension::CCHttpClient::send)
-        ),
-        &proxySend,
-        "cocos2d::extension::CCHttpClient::send",
-        tulip::hook::TulipConvention::Thiscall
-    );
-}
+        this->send(request);
+    }
+};
